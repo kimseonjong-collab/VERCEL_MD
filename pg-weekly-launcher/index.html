@@ -17,9 +17,7 @@
       background: #eff6ff;
       color: #0f172a;
     }
-
     * { box-sizing: border-box; }
-
     body {
       min-height: 100vh;
       min-height: 100dvh;
@@ -29,38 +27,35 @@
       padding: 24px;
       background: linear-gradient(160deg, #eff6ff 0%, #dbeafe 100%);
     }
-
     main {
-      width: min(100%, 360px);
+      width: min(100%, 380px);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 22px;
-      padding: 36px 24px;
+      gap: 18px;
+      padding: 34px 24px;
       border: 1px solid rgba(37, 99, 235, 0.15);
       border-radius: 28px;
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.94);
       box-shadow: 0 20px 50px rgba(30, 64, 175, 0.14);
       text-align: center;
     }
-
     img {
-      width: 144px;
-      height: 144px;
-      border-radius: 30px;
+      width: 132px;
+      height: 132px;
+      border-radius: 28px;
       object-fit: cover;
     }
-
     h1 {
       margin: 0;
       font-size: 28px;
       line-height: 1.25;
       letter-spacing: -0.03em;
     }
-
-    a {
+    .primary, .install-btn {
       width: 100%;
       padding: 15px 20px;
+      border: 0;
       border-radius: 14px;
       background: #2563eb;
       color: #fff;
@@ -68,19 +63,158 @@
       font-weight: 700;
       text-decoration: none;
       box-shadow: 0 8px 18px rgba(37, 99, 235, 0.24);
+      cursor: pointer;
     }
-
-    a:focus-visible {
+    .primary:focus-visible, .install-btn:focus-visible, .text-btn:focus-visible {
       outline: 3px solid #93c5fd;
       outline-offset: 4px;
     }
+    #installBox {
+      display: none;
+      width: 100%;
+      margin-top: 2px;
+      padding-top: 18px;
+      border-top: 1px solid #dbeafe;
+      text-align: left;
+    }
+    #installBox.show { display: block; }
+    #installBox h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    #installBox p {
+      margin: 0 0 14px;
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .install-btn {
+      box-shadow: none;
+      font-size: 15px;
+      padding: 12px 16px;
+    }
+    .text-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      border: 0;
+      background: transparent;
+      color: #64748b;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #guide {
+      display: none;
+      margin-top: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    #guide.show { display: block; }
+    #guide strong { color: #1d4ed8; }
   </style>
 </head>
 <body>
   <main>
-    <img src="/icons/icon-192.png" alt="PG주간업무 아이콘" width="144" height="144">
+    <img src="/icons/icon-192.png" alt="PG주간업무 아이콘" width="132" height="132">
     <h1>PG주간업무</h1>
-    <a href="https://script.google.com/macros/s/AKfycbwiv1JoCKIFonwSg0HhdP1NX1zl2RjkIF55JlCjvsbeRidpN2IOt1telQl-Kpm7MuPE/exec">PG주간업무 열기</a>
+    <a class="primary" href="https://script.google.com/macros/s/AKfycbwiv1JoCKIFonwSg0HhdP1NX1zl2RjkIF55JlCjvsbeRidpN2IOt1telQl-Kpm7MuPE/exec">PG주간업무 열기</a>
+
+    <section id="installBox" aria-live="polite">
+      <h2>홈 화면에 추가</h2>
+      <p id="installSummary">스마트폰 홈 화면에 추가하면 앱처럼 바로 열 수 있습니다.</p>
+      <button id="installButton" class="install-btn" type="button">홈 화면에 설치하기</button>
+      <div id="guide"></div>
+      <button id="dismissButton" class="text-btn" type="button">지금은 웹에서 사용하기</button>
+    </section>
   </main>
+
+  <script>
+    (() => {
+      const ua = navigator.userAgent || '';
+      const isAndroid = /Android/i.test(ua);
+      const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isMobile = isAndroid || isIOS;
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      const sessionDismissed = sessionStorage.getItem('pg-install-dismissed') === '1';
+
+      if (!isMobile || isStandalone || sessionDismissed) return;
+
+      const box = document.getElementById('installBox');
+      const button = document.getElementById('installButton');
+      const guide = document.getElementById('guide');
+      const summary = document.getElementById('installSummary');
+      const dismiss = document.getElementById('dismissButton');
+
+      const isSamsung = /SamsungBrowser/i.test(ua);
+      const isWhale = /Whale/i.test(ua);
+      const isNaver = /NAVER/i.test(ua);
+      const isChromeIOS = /CriOS/i.test(ua);
+      const isChromeAndroid = /Chrome/i.test(ua) && !isSamsung && !isWhale;
+      const isSafariIOS = isIOS && /Safari/i.test(ua) && !isChromeIOS && !isWhale;
+      const isInApp = isNaver || /KAKAOTALK|DaumApps|Instagram|FBAN|FBAV|Line\//i.test(ua);
+
+      let deferredPrompt = null;
+      let browserName = '현재 브라우저';
+      if (isSamsung) browserName = 'Samsung Internet';
+      else if (isWhale) browserName = 'Whale';
+      else if (isChromeAndroid || isChromeIOS) browserName = 'Chrome';
+      else if (isSafariIOS) browserName = 'Safari';
+      else if (isNaver) browserName = 'NAVER 앱';
+
+      box.classList.add('show');
+      summary.textContent = browserName + '에서 홈 화면에 추가하면 PG주간업무를 앱처럼 바로 열 수 있습니다.';
+
+      const showManualGuide = () => {
+        let html = '';
+        if (isInApp) {
+          html = '<strong>일반 브라우저에서 열어주세요.</strong><br>오른쪽 위 메뉴에서 “다른 브라우저로 열기”를 선택한 뒤 Chrome, Samsung Internet, Whale 또는 Safari에서 다시 여세요.';
+        } else if (isSafariIOS) {
+          html = '<strong>Safari</strong><br>① 아래 공유 버튼(□↑) → ② “홈 화면에 추가” → ③ 추가';
+        } else if (isChromeIOS) {
+          html = '<strong>iPhone Chrome</strong><br>① 공유 버튼 → ② “홈 화면에 추가” → ③ 추가';
+        } else if (isSamsung) {
+          html = '<strong>Samsung Internet</strong><br>① 하단 ☰ 메뉴 → ② “현재 페이지 추가” → ③ “홈 화면”';
+        } else if (isWhale) {
+          html = '<strong>Whale</strong><br>① Whale 메뉴 → ② “홈 화면에 추가” → ③ 추가';
+        } else if (isChromeAndroid) {
+          html = '<strong>Chrome</strong><br>① 오른쪽 위 ⋮ → ② “설치 및 바로가기 만들기” 또는 “앱 설치” → ③ 설치';
+        } else {
+          html = '<strong>홈 화면 추가 방법</strong><br>브라우저 메뉴 또는 공유 메뉴에서 “홈 화면에 추가”, “앱 설치” 항목을 선택하세요.';
+        }
+        guide.innerHTML = html;
+        guide.classList.add('show');
+      };
+
+      window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        deferredPrompt = event;
+        button.textContent = '앱 설치하기';
+      });
+
+      button.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          try { await deferredPrompt.userChoice; } catch (_) {}
+          deferredPrompt = null;
+          return;
+        }
+        showManualGuide();
+      });
+
+      dismiss.addEventListener('click', () => {
+        sessionStorage.setItem('pg-install-dismissed', '1');
+        box.classList.remove('show');
+      });
+
+      window.addEventListener('appinstalled', () => {
+        box.classList.remove('show');
+      });
+    })();
+  </script>
 </body>
 </html>
